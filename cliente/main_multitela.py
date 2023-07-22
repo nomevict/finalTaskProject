@@ -209,124 +209,6 @@ class Main(QMainWindow, Ui_main):
         self.tela_ativar_tarefa.excluir_tarefa_Button_3.clicked.connect(self.excluir_tarefa_linha)
         self.tela_ativar_tarefa.excluir_tarefa_Button_2.clicked.connect(self.abrir_funcoes_tarefa)
 
-    def abrir_tela_tarefa_concluida(self):
-        """
-        Abre a tela de tarefa concluida.
-
-        Exibe a lista de tarefas concluidas na tela.
-
-        Raises
-        ------
-        QMessageBox
-            Se ocorrer um erro ao obter a lista de tarefas concluidas.
-        """
-        try:
-            self.QtStack.setCurrentIndex(5)
-            self.tela_ativar_tarefa.tableWidget.setRowCount(0) 
-
-            mensagem = "abrir_con"
-            cliente_socket.send(mensagem.encode())
-
-            recebida = cliente_socket.recv(1024).decode()
-
-            if recebida == '0':
-                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
-            else:
-                lista = recebida.split(";")
-                if lista:
-                    for item in lista:
-                        if item != "":
-                            valores = item.split(',') 
-                            linha = self.tela_ativar_tarefa.tableWidget.rowCount()
-                            self.tela_ativar_tarefa.tableWidget.insertRow(linha)
-                            # Insert each value into the respective column of the table
-                            for coluna, valor in enumerate(valores):
-                                self.tela_ativar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
-                else:
-                    QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
-        except Exception as e:
-            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas concluídas: {e}")
-
-    def abrir_tela_buscar_tarefa(self):
-        """
-        Abre a tela de busca de tarefa.
-
-        Altera o índice da pilha de widgets para exibir a tela de busca de tarefa.
-
-        Raises
-        ------
-        QMessageBox
-            Se ocorrer um erro ao obter a lista de tarefas.
-        """
-        try:
-            self.QtStack.setCurrentIndex(4)
-            self.tela_buscar_tarefa.tableWidget.setRowCount(0)
-
-            mensagem = "abrir"
-            cliente_socket.send(mensagem.encode())
-
-            recebida = cliente_socket.recv(1024).decode()
-
-            if recebida == '0':
-                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
-            else:
-                lista = recebida.split(";")
-                if lista:
-                    for item in lista:
-                        if item != "":
-                            valores = item.split(',')  # Split by comma to get individual values
-                            linha = self.tela_buscar_tarefa.tableWidget.rowCount()
-                            self.tela_buscar_tarefa.tableWidget.insertRow(linha)
-                            # Insert each value into the respective column of the table
-                            for coluna, valor in enumerate(valores):
-                                self.tela_buscar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
-        except Exception as e:
-            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
-                  
-    def cadastrar_tarefa(self):
-        """
-        Cadastra uma nova tarefa com base nos dados fornecidos.
-
-        Envia os dados da nova tarefa para o servidor e exibe uma caixa de diálogo com o resultado do cadastro.
-
-        Raises
-        ------
-        QMessageBox
-            Se algum campo não for preenchido ou o formato do prazo for inválido.
-        """
-        try:
-            titulo = self.tela_cadastro_tarefa.idtarefa_lineEdit.text()
-            descricao = self.tela_cadastro_tarefa.descricao_textEdit.toPlainText()
-            prazo = self.tela_cadastro_tarefa.prazo_lineEdit.text()
-
-            if titulo and descricao and prazo:
-                try:
-                    datetime.strptime(prazo, "%Y-%m-%d")
-                except ValueError:
-                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Formato de prazo inválido! Utilize o formato "yyyy-mm-dd".')
-                    return
-
-                mensagem = f'cad_tarefa,{titulo},{descricao},{prazo}'
-                cliente_socket.send(mensagem.encode())
-                print('mensagem enviada')
-                recebida = cliente_socket.recv(1024).decode()
-
-                if recebida == '1':
-                    QMessageBox.information(None, 'interface', 'Cadastro realizado com sucesso!')
-                    self.tela_cadastro_tarefa.idtarefa_lineEdit.setText('')
-                    self.tela_cadastro_tarefa.descricao_textEdit.setPlainText('')
-                    self.tela_cadastro_tarefa.prazo_lineEdit.setText('')
-
-                elif recebida == '3':
-                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de integridade. Banco de Dados!')
-                else:
-                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de conexão cliente-servidor!')
-
-            else:
-                QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Cadastro não realizado! Informe todos os campos.')
-        except Exception as e:
-            QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', f'Erro ao cadastrar a tarefa: {str(e)}')
-
     def abrir_tela_login(self): 
         """
         Abre a tela de login.
@@ -496,6 +378,124 @@ class Main(QMainWindow, Ui_main):
                 raise QMessageBox(None, 'interface', 'Cadastro nao realizado! Informe todos os campos.')
         except Exception as e:
             raise QMessageBox(None, 'interface', f'Erro ao cadastrar o usuário: {str(e)}')
+        
+    def abrir_tela_tarefa_concluida(self):
+        """
+        Abre a tela de tarefa concluida.
+
+        Exibe a lista de tarefas concluidas na tela.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro ao obter a lista de tarefas concluidas.
+        """
+        try:
+            self.QtStack.setCurrentIndex(5)
+            self.tela_ativar_tarefa.tableWidget_2.setRowCount(0) 
+
+            mensagem = "abrir_con"
+            cliente_socket.send(mensagem.encode())
+
+            recebida = cliente_socket.recv(1024).decode()
+
+            if recebida == '0':
+                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
+            else:
+                lista = recebida.split(";")
+                if lista:
+                    for item in lista:
+                        if item != "":
+                            valores = item.split(',') 
+                            linha = self.tela_ativar_tarefa.tableWidget_2.rowCount()
+                            self.tela_ativar_tarefa.tableWidget_2.insertRow(linha)
+                            # Insert each value into the respective column of the table
+                            for coluna, valor in enumerate(valores):
+                                self.tela_ativar_tarefa.tableWidget_2.setItem(linha, coluna, QTableWidgetItem(str(valor)))
+                else:
+                    QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
+        except Exception as e:
+            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas concluídas: {e}")
+
+    def abrir_tela_buscar_tarefa(self):
+        """
+        Abre a tela de busca de tarefa.
+
+        Altera o índice da pilha de widgets para exibir a tela de busca de tarefa.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro ao obter a lista de tarefas.
+        """
+        try:
+            self.QtStack.setCurrentIndex(4)
+            self.tela_buscar_tarefa.tableWidget.setRowCount(0)
+
+            mensagem = "abrir"
+            cliente_socket.send(mensagem.encode())
+
+            recebida = cliente_socket.recv(1024).decode()
+
+            if recebida == '0':
+                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
+            else:
+                lista = recebida.split(";")
+                if lista:
+                    for item in lista:
+                        if item != "":
+                            valores = item.split(',')  # Split by comma to get individual values
+                            linha = self.tela_buscar_tarefa.tableWidget.rowCount()
+                            self.tela_buscar_tarefa.tableWidget.insertRow(linha)
+                            # Insert each value into the respective column of the table
+                            for coluna, valor in enumerate(valores):
+                                self.tela_buscar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
+        except Exception as e:
+            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
+                  
+    def cadastrar_tarefa(self):
+        """
+        Cadastra uma nova tarefa com base nos dados fornecidos.
+
+        Envia os dados da nova tarefa para o servidor e exibe uma caixa de diálogo com o resultado do cadastro.
+
+        Raises
+        ------
+        QMessageBox
+            Se algum campo não for preenchido ou o formato do prazo for inválido.
+        """
+        try:
+            titulo = self.tela_cadastro_tarefa.idtarefa_lineEdit.text()
+            descricao = self.tela_cadastro_tarefa.descricao_textEdit.toPlainText()
+            prazo = self.tela_cadastro_tarefa.prazo_lineEdit.text()
+
+            if titulo and descricao and prazo:
+                try:
+                    datetime.strptime(prazo, "%Y-%m-%d")
+                except ValueError:
+                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Formato de prazo inválido! Utilize o formato "yyyy-mm-dd".')
+                    return
+
+                mensagem = f'cad_tarefa,{titulo},{descricao},{prazo}'
+                cliente_socket.send(mensagem.encode())
+                print('mensagem enviada')
+                recebida = cliente_socket.recv(1024).decode()
+
+                if recebida == '1':
+                    QMessageBox.information(None, 'interface', 'Cadastro realizado com sucesso!')
+                    self.tela_cadastro_tarefa.idtarefa_lineEdit.setText('')
+                    self.tela_cadastro_tarefa.descricao_textEdit.setPlainText('')
+                    self.tela_cadastro_tarefa.prazo_lineEdit.setText('')
+
+                elif recebida == '3':
+                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de integridade. Banco de Dados!')
+                else:
+                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de conexão cliente-servidor!')
+
+            else:
+                QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Cadastro não realizado! Informe todos os campos.')
+        except Exception as e:
+            QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', f'Erro ao cadastrar a tarefa: {str(e)}')
 
     def excluir_tarefa_linha(self):
         """
@@ -509,7 +509,7 @@ class Main(QMainWindow, Ui_main):
             Se nenhum item for selecionado ou ocorrer um erro durante a exclusão.
         """
         try:
-            item_selecionado = self.tela_ativar_tarefa.tableWidget.currentItem()
+            item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
             if item_selecionado is not None:
                 id_tarefa = item_selecionado.text().split(" - ")[0]
@@ -518,7 +518,7 @@ class Main(QMainWindow, Ui_main):
 
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
-                    self.tela_ativar_tarefa.tableWidget.takeItem(self.tela_ativar_tarefa.tableWidget.row(item_selecionado))
+                    self.tela_ativar_tarefa.tableWidget_2.takeItem(self.tela_ativar_tarefa.tableWidget_2.row(item_selecionado))
                     QMessageBox.information(self, "Excluir Tarefa", "Tarefa excluída com sucesso!")
                 else:
                     QMessageBox.warning(self, "Excluir Tarefa", "Erro ao excluir a tarefa.")
@@ -570,7 +570,7 @@ class Main(QMainWindow, Ui_main):
             Se nenhum item for selecionado ou ocorrer um erro durante a reativação.
         """
         try:
-            item_selecionado = self.tela_ativar_tarefa.tableWidget.currentItem()
+            item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
             if item_selecionado is not None:
                 id_tarefa = item_selecionado.text().split(" - ")[0]
@@ -580,7 +580,7 @@ class Main(QMainWindow, Ui_main):
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
                     QMessageBox.information(self, "Reativar Tarefa", "Tarefa reativada com sucesso!")
-                    self.tela_ativar_tarefa.tableWidget.removeRow(item_selecionado.row())
+                    self.tela_ativar_tarefa.tableWidget_2.removeRow(item_selecionado.row())
                 else:
                     QMessageBox.warning(self, "Reativar Tarefa", "Erro ao reativar a tarefa.")
             else:

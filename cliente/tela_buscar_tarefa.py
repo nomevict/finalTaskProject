@@ -1,6 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Tela_buscar_tarefa(object):
     def setupUi(self, Cadastro):
         Cadastro.setObjectName("Cadastro")
