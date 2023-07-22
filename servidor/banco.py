@@ -5,7 +5,6 @@ from mysql.connector import Error
 # importacao das classes
 from usuario import Usuario
 from datetime import datetime, date
-import json  # Add this import to use JSON serialization
 
 class Banco:
     """

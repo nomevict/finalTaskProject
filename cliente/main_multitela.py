@@ -179,10 +179,6 @@ class Main(QMainWindow, Ui_main):
         super(Main, self).__init__()
         self.setupUi(self)
         self.login_atual = login_atual
-        self.tableWidget = QtWidgets.QTableWidget(self)
-        self.tableWidget.setColumnCount(4)
-        self.tableWidget.setHorizontalHeaderLabels(["ID", "Título", "Descrição", "Prazo"])
-        # Configurar outros aspectos da tabela, se necessário
         self.id_usuario = None
 
         self.tela_login.login_Button.clicked.connect(self.loginUser)
@@ -215,18 +211,18 @@ class Main(QMainWindow, Ui_main):
 
     def abrir_tela_tarefa_concluida(self):
         """
-        Abre a tela de busca de tarefa.
+        Abre a tela de tarefa concluida.
 
-        Altera o índice da pilha de widgets para exibir a tela de busca de tarefa.
+        Exibe a lista de tarefas concluidas na tela.
 
         Raises
         ------
         QMessageBox
-            Se ocorrer um erro ao obter a lista de tarefas.
+            Se ocorrer um erro ao obter a lista de tarefas concluidas.
         """
         try:
-            self.QtStack.setCurrentIndex(4)
-            self.tela_buscar_tarefa.tableWidget.setRowCount(0) 
+            self.QtStack.setCurrentIndex(5)
+            self.tela_ativar_tarefa.tableWidget.setRowCount(0) 
 
             mensagem = "abrir_con"
             cliente_socket.send(mensagem.encode())
@@ -234,21 +230,23 @@ class Main(QMainWindow, Ui_main):
             recebida = cliente_socket.recv(1024).decode()
 
             if recebida == '0':
-                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
+                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
             else:
                 lista = recebida.split(";")
                 if lista:
                     for item in lista:
                         if item != "":
-                            linha = self.tela_buscar_tarefa.tableWidget.rowCount()
-                            self.tela_buscar_tarefa.tableWidget.insertRow(linha)
-                            # Preencher cada coluna da linha com os valores da tarefa
-                            valores = item.split(',')
+                            valores = item.split(',') 
+                            linha = self.tela_ativar_tarefa.tableWidget.rowCount()
+                            self.tela_ativar_tarefa.tableWidget.insertRow(linha)
+                            # Insert each value into the respective column of the table
                             for coluna, valor in enumerate(valores):
-                                self.tela_buscar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
+                                self.tela_ativar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
+                else:
+                    QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
         except Exception as e:
-            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
-            
+            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas concluídas: {e}")
+
     def abrir_tela_buscar_tarefa(self):
         """
         Abre a tela de busca de tarefa.
@@ -262,7 +260,7 @@ class Main(QMainWindow, Ui_main):
         """
         try:
             self.QtStack.setCurrentIndex(4)
-            self.tela_buscar_tarefa.tableWidget.setRowCount(0) 
+            self.tela_buscar_tarefa.tableWidget.setRowCount(0)
 
             mensagem = "abrir"
             cliente_socket.send(mensagem.encode())
@@ -276,10 +274,10 @@ class Main(QMainWindow, Ui_main):
                 if lista:
                     for item in lista:
                         if item != "":
+                            valores = item.split(',')  # Split by comma to get individual values
                             linha = self.tela_buscar_tarefa.tableWidget.rowCount()
                             self.tela_buscar_tarefa.tableWidget.insertRow(linha)
-                            # Preencher cada coluna da linha com os valores da tarefa
-                            valores = item.split(',')
+                            # Insert each value into the respective column of the table
                             for coluna, valor in enumerate(valores):
                                 self.tela_buscar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
         except Exception as e:
@@ -511,7 +509,7 @@ class Main(QMainWindow, Ui_main):
             Se nenhum item for selecionado ou ocorrer um erro durante a exclusão.
         """
         try:
-            item_selecionado = self.tela_ativar_tarefa.campo_list_widget.currentItem()
+            item_selecionado = self.tela_ativar_tarefa.tableWidget.currentItem()
 
             if item_selecionado is not None:
                 id_tarefa = item_selecionado.text().split(" - ")[0]
@@ -520,7 +518,7 @@ class Main(QMainWindow, Ui_main):
 
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
-                    self.tela_ativar_tarefa.campo_list_widget.takeItem(self.tela_ativar_tarefa.campo_list_widget.row(item_selecionado))
+                    self.tela_ativar_tarefa.tableWidget.takeItem(self.tela_ativar_tarefa.tableWidget.row(item_selecionado))
                     QMessageBox.information(self, "Excluir Tarefa", "Tarefa excluída com sucesso!")
                 else:
                     QMessageBox.warning(self, "Excluir Tarefa", "Erro ao excluir a tarefa.")
@@ -528,7 +526,7 @@ class Main(QMainWindow, Ui_main):
                 QMessageBox.warning(self, "Excluir Tarefa", "Selecione uma tarefa para excluí-la.")
         except Exception as e:
             QMessageBox.warning(self, "Excluir Tarefa", f"Erro ao excluir a tarefa: {e}")
-
+    
     def concluir_tarefa_linha(self):
         """
         Conclui uma tarefa com base no item selecionado na lista.
@@ -541,7 +539,7 @@ class Main(QMainWindow, Ui_main):
             Se nenhum item for selecionado ou ocorrer um erro durante a conclusão.
         """
         try:
-            item_selecionado = self.tela_buscar_tarefa.campo_list_widget.currentItem()
+            item_selecionado = self.tela_buscar_tarefa.tableWidget.currentItem()
 
             if item_selecionado is not None:
                 id_tarefa = item_selecionado.text().split(" - ")[0]
@@ -551,7 +549,8 @@ class Main(QMainWindow, Ui_main):
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
                     QMessageBox.information(self, "Concluir Tarefa", "Tarefa concluída com sucesso!")
-                    self.tela_buscar_tarefa.campo_list_widget.takeItem(self.tela_buscar_tarefa.campo_list_widget.currentRow())
+                    # Remove the item from the table
+                    self.tela_buscar_tarefa.tableWidget.removeRow(item_selecionado.row())
                 else:
                     QMessageBox.warning(self, "Concluir Tarefa", "Erro ao concluir a tarefa.")
             else:
@@ -571,7 +570,7 @@ class Main(QMainWindow, Ui_main):
             Se nenhum item for selecionado ou ocorrer um erro durante a reativação.
         """
         try:
-            item_selecionado = self.tela_ativar_tarefa.campo_list_widget.currentItem()
+            item_selecionado = self.tela_ativar_tarefa.tableWidget.currentItem()
 
             if item_selecionado is not None:
                 id_tarefa = item_selecionado.text().split(" - ")[0]
@@ -581,7 +580,7 @@ class Main(QMainWindow, Ui_main):
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
                     QMessageBox.information(self, "Reativar Tarefa", "Tarefa reativada com sucesso!")
-                    self.tela_ativar_tarefa.campo_list_widget.takeItem(self.tela_ativar_tarefa.campo_list_widget.currentRow())
+                    self.tela_ativar_tarefa.tableWidget.removeRow(item_selecionado.row())
                 else:
                     QMessageBox.warning(self, "Reativar Tarefa", "Erro ao reativar a tarefa.")
             else:
