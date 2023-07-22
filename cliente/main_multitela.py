@@ -509,16 +509,24 @@ class Main(QMainWindow, Ui_main):
             Se nenhum item for selecionado ou ocorrer um erro durante a exclusão.
         """
         try:
+            # Verifica se há um item selecionado na tabela
             item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
             if item_selecionado is not None:
+                # Obtém o ID da tarefa a partir do texto do item selecionado
                 id_tarefa = item_selecionado.text().split(" - ")[0]
                 mensagem = f"excluir_tarefa,{id_tarefa}"
+
+                # Envio da mensagem ao servidor para excluir a tarefa
                 cliente_socket.send(mensagem.encode())
 
+                # Aguarda a resposta do servidor (supondo que o retorno é '1' para sucesso)
                 recebida = cliente_socket.recv(1024).decode()
+
                 if recebida == '1':
-                    self.tela_ativar_tarefa.tableWidget_2.takeItem(self.tela_ativar_tarefa.tableWidget_2.row(item_selecionado))
+                    # Remove a tarefa da tabela
+                    row = self.tela_ativar_tarefa.tableWidget_2.row(item_selecionado)
+                    self.tela_ativar_tarefa.tableWidget_2.removeRow(row)
                     QMessageBox.information(self, "Excluir Tarefa", "Tarefa excluída com sucesso!")
                 else:
                     QMessageBox.warning(self, "Excluir Tarefa", "Erro ao excluir a tarefa.")
@@ -526,7 +534,7 @@ class Main(QMainWindow, Ui_main):
                 QMessageBox.warning(self, "Excluir Tarefa", "Selecione uma tarefa para excluí-la.")
         except Exception as e:
             QMessageBox.warning(self, "Excluir Tarefa", f"Erro ao excluir a tarefa: {e}")
-    
+
     def concluir_tarefa_linha(self):
         """
         Conclui uma tarefa com base no item selecionado na lista.
