@@ -608,80 +608,60 @@ class Main(QMainWindow, Ui_main):
         except Exception as e:
             QMessageBox.warning(self, "Reativar Tarefa", f"Erro ao reativar a tarefa: {e}")
 
-    def editar_tarefa_linha(self, item):
-        """
-        Abre um dialogo para editar as informacoes de uma tarefa selecionada.
-
-        Este metodo e acionado quando o usuario clica em uma tarefa na interface grafica e seleciona a opcao de editar.
-
-        Parameters:
-        ----------
-        item : QTreeWidgetItem
-            O item da arvore que representa a tarefa selecionada.
-
-        Raises:
-        -------
-        Exception
-            Se ocorrer algum erro ao editar a tarefa.
-        """
-        # Extrair as informações do item selecionado
-        id_tarefa, titulo, descricao, prazo = item.text().split(" - ")
-
-        # Exibir um diálogo para o usuário editar a descrição e o prazo
-        titulo_editado, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar título da tarefa:", QLineEdit.Normal, titulo)
-        if ok:
-            descricao_editada, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar descrição da tarefa:", QLineEdit.Normal, descricao)
-            if ok:
-                prazo_editado, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar prazo da tarefa:", QLineEdit.Normal, prazo)
-                if ok:
-                    # Separar a descrição, o título e o prazo editados
-                    novo_titulo, nova_descricao, novo_prazo = titulo_editado.strip(), descricao_editada.strip(), prazo_editado.strip()
-
-                    # Chamar a função para atualizar a tarefa
-                    if self.atualizar_tarefa(id_tarefa, novo_titulo, nova_descricao, novo_prazo):
-                        QMessageBox.information(self, "Editar Tarefa", "Tarefa atualizada com sucesso!")
-                        self.abrir_tela_buscar_tarefa()  # Atualizar o campo list widget após a atualização da tarefa
-                    else:
-                        QMessageBox.warning(self, "Editar Tarefa", "Erro ao atualizar a tarefa.")
-    
-    def atualizar_tarefa(self, id_tarefa, novo_titulo, nova_descricao, novo_prazo):
-        """
-        Atualiza uma tarefa existente no banco de dados.
-
-        Este metodo envia uma mensagem para o servidor contendo a solicitacao de atualizacao da tarefa, juntamente com as novas informacoes.
-
-        Parameters:
-        ----------
-        id_tarefa : int
-            O ID da tarefa a ser atualizada.
-        novo_titulo : str
-            O novo título da tarefa.
-        nova_descricao : str
-            A nova descrição da tarefa.
-        novo_prazo : str
-            O novo prazo da tarefa.
-
-        Returns:
-        -------
-        bool
-            True se a tarefa foi atualizada com sucesso, False caso contrario.
-
-        Raises:
-        -------
-        Exception
-            Se ocorrer algum erro ao atualizar a tarefa.
-        """
+    def editar_tarefa_linha(self):
         try:
-            mensagem = f"atualizar_tarefa,{id_tarefa},{novo_titulo},{nova_descricao},{novo_prazo}"
-            cliente_socket.send(mensagem.encode())
-            recebida = cliente_socket.recv(1024).decode()
-            if recebida == "1":
-                return True
+            item_selecionado = self.tela_buscar_tarefa.tableWidget.currentItem()
+
+            if item_selecionado is not None:
+                # Verificar se o usuário clicou na primeira coluna (coluna do ID da tarefa)
+                coluna_selecionada = self.tela_buscar_tarefa.tableWidget.currentColumn()
+                if coluna_selecionada != 0:
+                    QMessageBox.warning(self, "Editar Tarefa", "Apenas pelo o ID da tarefa. Clique, e, edite as informacoes.")
+                    return
+
+                # Obtém o ID da tarefa a partir do texto do item selecionado
+                id_tarefa = item_selecionado.text().split(" - ")[0]
+
+                # Exibir uma caixa de diálogo para editar os campos da tarefa
+                novo_titulo, ok1 = QInputDialog.getText(self, "Editar Tarefa", "Novo título:", QLineEdit.Normal)
+                nova_descricao, ok2 = QInputDialog.getText(self, "Editar Tarefa", "Nova descrição:", QLineEdit.Normal)
+                novo_prazo, ok3 = QInputDialog.getText(self, "Editar Tarefa", "Novo prazo (formato yyyy-mm-dd):", QLineEdit.Normal)
+
+                # Verificar se o usuário pressionou "Cancelar" em alguma caixa de diálogo
+                if not (ok1 or ok2 or ok3):
+                    return
+
+                # Montar a mensagem com os dados atualizados da tarefa
+                mensagem = f"atualizar_tarefa,{id_tarefa}"
+
+                if ok1:
+                    mensagem += f",{novo_titulo}"
+                if ok2:
+                    mensagem += f",{nova_descricao}"
+                if ok3:
+                    mensagem += f",{novo_prazo}"
+
+                # Enviar a mensagem para o servidor
+                cliente_socket.send(mensagem.encode())
+
+                # Aguardar a resposta do servidor
+                resposta = cliente_socket.recv(1024).decode()
+
+                if resposta == '1':
+                    # Atualizar os campos da tarefa na tabela
+                    titulo_atualizado = novo_titulo if ok1 else item_selecionado.text().split(" - ")[1]
+                    descricao_atualizada = nova_descricao if ok2 else item_selecionado.text().split(" - ")[2]
+                    prazo_atualizado = novo_prazo if ok3 else item_selecionado.text().split(" - ")[3]
+
+                    item_selecionado.setText(f"{id_tarefa} - {titulo_atualizado} - {descricao_atualizada} - {prazo_atualizado}")
+                    self.abrir_tela_buscar_tarefa()
+                    QMessageBox.information(self, "Editar Tarefa", "Tarefa editada com sucesso!")
+                else:
+                    QMessageBox.warning(self, "Editar Tarefa", "Erro ao editar a tarefa.")
             else:
-                return False
+                QMessageBox.warning(self, "Editar Tarefa", "Selecione uma tarefa para editá-la.")
         except Exception as e:
-            print(f"Erro ao atualizar a tarefa: {e}")
-            return False
+            QMessageBox.warning(self, "Editar Tarefa", f"Ocorreu um erro ao editar a tarefa: {str(e)}")
 
     def loginUser(self):
         """
