@@ -1,6 +1,3 @@
-import typing
-import json
-
 from PyQt5.QtWidgets import QInputDialog, QLineEdit
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -17,7 +14,7 @@ from tela_funcoes_tarefas import Tela_funcoes_tarefa
 from datetime import datetime
 
 import socket
-ip = '10.180.47.135'
+ip = '192.168.18.36'
 port = 9017
 addr = ((ip, port))
 
@@ -383,14 +380,14 @@ class Main(QMainWindow, Ui_main):
         
     def abrir_tela_tarefa_concluida(self):
         """
-        Abre a tela de busca de tarefa.
+        Abre a tela de tarefas concluídas.
 
-        Altera o índice da pilha de widgets para exibir a tela de busca de tarefa.
+        Altera o índice da pilha de widgets para exibir a tela de tarefas concluídas.
 
         Raises
         ------
         QMessageBox
-            Se ocorrer um erro ao obter a lista de tarefas.
+            Se ocorrer um erro ao obter a lista de tarefas concluídas.
         """
         try:
             self.QtStack.setCurrentIndex(5)
@@ -402,14 +399,14 @@ class Main(QMainWindow, Ui_main):
             recebida = cliente_socket.recv(1024).decode()
 
             if recebida == '0':
-                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
+                QMessageBox.information(self, "Tarefas Concluídas", "Nenhuma tarefa concluída encontrada.")
             else:
                 tarefas_str = recebida.strip(';')
                 tarefas_lista = tarefas_str.split(';')
                 for tarefa_str in tarefas_lista:
                     tarefa_dados = tarefa_str.split(' - ')
                     if len(tarefa_dados) == 4:
-                        tarefa_id = tarefa_dados[0]
+                        tarefa_id = tarefa_dados[0].strip('()"')  # Remover as aspas do ID, se existirem
                         tarefa_nome = tarefa_dados[1]
                         tarefa_descricao = tarefa_dados[2]
                         tarefa_prazo = tarefa_dados[3]
@@ -421,7 +418,7 @@ class Main(QMainWindow, Ui_main):
                         self.tela_ativar_tarefa.tableWidget_2.setItem(linha, 2, QTableWidgetItem(tarefa_descricao))
                         self.tela_ativar_tarefa.tableWidget_2.setItem(linha, 3, QTableWidgetItem(tarefa_prazo))
         except Exception as e:
-            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
+            QMessageBox.critical(self, "Tarefas Concluídas", f"Erro ao obter a lista de tarefas concluídas: {e}")
 
     def abrir_tela_buscar_tarefa(self):
         """
@@ -442,6 +439,7 @@ class Main(QMainWindow, Ui_main):
             cliente_socket.send(mensagem.encode())
 
             recebida = cliente_socket.recv(1024).decode()
+            print(recebida)
 
             if recebida == '0':
                 QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
@@ -451,7 +449,7 @@ class Main(QMainWindow, Ui_main):
                 for tarefa_str in tarefas_lista:
                     tarefa_dados = tarefa_str.split(' - ')
                     if len(tarefa_dados) == 4:
-                        tarefa_id = tarefa_dados[0]
+                        tarefa_id = tarefa_dados[0].strip('()"')  # Remover as aspas do ID, se existirem
                         tarefa_nome = tarefa_dados[1]
                         tarefa_descricao = tarefa_dados[2]
                         tarefa_prazo = tarefa_dados[3]
@@ -510,101 +508,80 @@ class Main(QMainWindow, Ui_main):
             QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', f'Erro ao cadastrar a tarefa: {str(e)}')
 
     def excluir_tarefa_linha(self):
-        """
-        Exclui uma tarefa com base no item selecionado na lista.
-
-        Obtém o item selecionado na lista e envia uma solicitação ao servidor para excluir a tarefa. Exibe o resultado da exclusão.
-
-        Raises
-        ------
-        QMessageBox
-            Se nenhum item for selecionado ou ocorrer um erro durante a exclusão.
-        """
         try:
-            # Verifica se há um item selecionado na tabela
             item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
             if item_selecionado is not None:
-                # Obtém o ID da tarefa a partir do texto do item selecionado
+                # Verificar se o usuário clicou na primeira coluna (coluna do ID da tarefa)
+                coluna_selecionada = self.tela_ativar_tarefa.tableWidget_2.currentColumn()
+                if coluna_selecionada != 0:
+                    QMessageBox.warning(self, "Excluir Tarefa", "A exclusão deve ser feita pelo ID da tarefa.")
+                    return
+
                 id_tarefa = item_selecionado.text().split(" - ")[0]
                 mensagem = f"excluir_tarefa,{id_tarefa}"
-
-                # Envio da mensagem ao servidor para excluir a tarefa
                 cliente_socket.send(mensagem.encode())
 
-                # Aguarda a resposta do servidor (supondo que o retorno é '1' para sucesso)
                 recebida = cliente_socket.recv(1024).decode()
-
                 if recebida == '1':
-                    # Remove a tarefa da tabela
-                    row = self.tela_ativar_tarefa.tableWidget_2.row(item_selecionado)
-                    self.tela_ativar_tarefa.tableWidget_2.removeRow(row)
+                    self.tela_ativar_tarefa.tableWidget_2.removeRow(item_selecionado.row())
                     QMessageBox.information(self, "Excluir Tarefa", "Tarefa excluída com sucesso!")
                 else:
                     QMessageBox.warning(self, "Excluir Tarefa", "Erro ao excluir a tarefa.")
             else:
-                QMessageBox.warning(self, "Excluir Tarefa", "Selecione uma tarefa para excluí-la.")
+                QMessageBox.warning(self, "Excluir Tarefa", "Selecione uma tarefa para excluí-la pelo ID.")
         except Exception as e:
             QMessageBox.warning(self, "Excluir Tarefa", f"Erro ao excluir a tarefa: {e}")
 
     def concluir_tarefa_linha(self):
-        """
-        Conclui uma tarefa com base no item selecionado na lista.
-
-        Envia uma solicitação ao servidor para concluir a tarefa selecionada na lista de busca de tarefas. Exibe o resultado da conclusão.
-
-        Raises
-        ------
-        QMessageBox
-            Se nenhum item for selecionado ou ocorrer um erro durante a conclusão.
-        """
         try:
             item_selecionado = self.tela_buscar_tarefa.tableWidget.currentItem()
 
             if item_selecionado is not None:
+                # Verificar se o usuário clicou na primeira coluna (coluna do ID da tarefa)
+                coluna_selecionada = self.tela_buscar_tarefa.tableWidget.currentColumn()
+                if coluna_selecionada != 0:
+                    QMessageBox.warning(self, "Concluir Tarefa", "A ativação deve ser feita pelo ID da tarefa.")
+                    return
+
                 id_tarefa = item_selecionado.text().split(" - ")[0]
                 mensagem = f"concluir_tarefa,{id_tarefa}"
                 cliente_socket.send(mensagem.encode())
 
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
-                    QMessageBox.information(self, "Concluir Tarefa", "Tarefa concluída com sucesso!")
-                    # Remove the item from the table
                     self.tela_buscar_tarefa.tableWidget.removeRow(item_selecionado.row())
+                    QMessageBox.information(self, "Concluir Tarefa", "Tarefa concluída com sucesso!")
                 else:
                     QMessageBox.warning(self, "Concluir Tarefa", "Erro ao concluir a tarefa.")
             else:
-                QMessageBox.warning(self, "Concluir Tarefa", "Selecione uma tarefa para concluí-la.")
+                QMessageBox.warning(self, "Concluir Tarefa", "Selecione uma tarefa para concluí-la pelo ID.")
         except Exception as e:
             QMessageBox.warning(self, "Concluir Tarefa", f"Erro ao concluir a tarefa: {e}")
 
     def reativar_tarefa_linha(self):
-        """
-        Reativa uma tarefa com base no item selecionado na lista.
-
-        Envia uma solicitação ao servidor para reativar a tarefa selecionada na lista de tarefas ativas. Exibe o resultado da reativação.
-
-        Raises
-        ------
-        QMessageBox
-            Se nenhum item for selecionado ou ocorrer um erro durante a reativação.
-        """
         try:
             item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
             if item_selecionado is not None:
+                # Verificar se o usuário clicou na primeira coluna (coluna do ID da tarefa)
+                coluna_selecionada = self.tela_ativar_tarefa.tableWidget_2.currentColumn()
+                if coluna_selecionada != 0:
+                    QMessageBox.warning(self, "Reativar Tarefa", "A reativação deve ser feita pelo ID da tarefa.")
+                    return
+
                 id_tarefa = item_selecionado.text().split(" - ")[0]
                 mensagem = f"reativar_tarefa,{id_tarefa}"
                 cliente_socket.send(mensagem.encode())
 
                 recebida = cliente_socket.recv(1024).decode()
                 if recebida == '1':
-                    QMessageBox.information(self, "Reativar Tarefa", "Tarefa reativada com sucesso!")
                     self.tela_ativar_tarefa.tableWidget_2.removeRow(item_selecionado.row())
+                    QMessageBox.information(self, "Reativar Tarefa", "Tarefa reativada com sucesso!")
                 else:
                     QMessageBox.warning(self, "Reativar Tarefa", "Erro ao reativar a tarefa.")
             else:
-                QMessageBox.warning(self, "Reativar Tarefa", "Selecione uma tarefa para reativá-la.")
+                QMessageBox.warning(self, "Reativar Tarefa", "Selecione uma tarefa para reativá-la pelo ID.")
         except Exception as e:
             QMessageBox.warning(self, "Reativar Tarefa", f"Erro ao reativar a tarefa: {e}")
 

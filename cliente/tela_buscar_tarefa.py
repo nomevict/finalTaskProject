@@ -4,7 +4,7 @@ class Tela_buscar_tarefa(object):
     def setupUi(self, Cadastro):
         Cadastro.setObjectName("Cadastro")
         Cadastro.resize(723, 610)
-        Cadastro.setStyleSheet("background-color: rgb(0, 70, 112);")
+        Cadastro.setStyleSheet("background-color: rgb(0, 90, 142);")  # Slightly lighter blue color
         self.label = QtWidgets.QLabel(Cadastro)
         self.label.setGeometry(QtCore.QRect(240, 70, 241, 21))
         self.label.setObjectName("label")
@@ -37,6 +37,9 @@ class Tela_buscar_tarefa(object):
         self.tableWidget.setHorizontalHeaderItem(2, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(3, item)
+
+        # Set the width of the "Description" column to 329 pixels (adjust the width as needed)
+        self.tableWidget.setColumnWidth(2, 329)
 
         self.retranslateUi(Cadastro)
         QtCore.QMetaObject.connectSlotsByName(Cadastro)

@@ -186,7 +186,7 @@ def iniciar_servidor():
     Este metodo cria um socket para o servidor, define o endereço IP e a porta para a comunicacao. Em seguida, ele aguarda conexoes de clientes.
 
     """
-    ip = '10.180.47.135'
+    ip = '192.168.18.36'
     port = 9017
 
     addr = (ip, port)  # Define a tupla de endereço

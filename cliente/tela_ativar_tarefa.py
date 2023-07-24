@@ -4,7 +4,7 @@ class Tela_ativar(object):
     def setupUi(self, Cadastro):
         Cadastro.setObjectName("Cadastro")
         Cadastro.resize(712, 597)
-        Cadastro.setStyleSheet("background-color: rgb(0, 70, 112);")
+        Cadastro.setStyleSheet("background-color: rgb(0, 90, 142);")
         self.label = QtWidgets.QLabel(Cadastro)
         self.label.setGeometry(QtCore.QRect(240, 60, 241, 21))
         self.label.setObjectName("label")
@@ -45,6 +45,9 @@ class Tela_ativar(object):
         self.tableWidget_2.setHorizontalHeaderItem(2, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget_2.setHorizontalHeaderItem(3, item)
+
+        # Set the width of the "Description" column to 300 pixels (adjust the width as needed)
+        self.tableWidget_2.setColumnWidth(2, 329)
 
         self.retranslateUi(Cadastro)
         QtCore.QMetaObject.connectSlotsByName(Cadastro)
