@@ -1,4 +1,6 @@
 import typing
+import json
+
 from PyQt5.QtWidgets import QInputDialog, QLineEdit
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -15,7 +17,7 @@ from tela_funcoes_tarefas import Tela_funcoes_tarefa
 from datetime import datetime
 
 import socket
-ip = '192.168.18.36'
+ip = '10.180.47.135'
 port = 9017
 addr = ((ip, port))
 
@@ -381,18 +383,18 @@ class Main(QMainWindow, Ui_main):
         
     def abrir_tela_tarefa_concluida(self):
         """
-        Abre a tela de tarefa concluida.
+        Abre a tela de busca de tarefa.
 
-        Exibe a lista de tarefas concluidas na tela.
+        Altera o índice da pilha de widgets para exibir a tela de busca de tarefa.
 
         Raises
         ------
         QMessageBox
-            Se ocorrer um erro ao obter a lista de tarefas concluidas.
+            Se ocorrer um erro ao obter a lista de tarefas.
         """
         try:
             self.QtStack.setCurrentIndex(5)
-            self.tela_ativar_tarefa.tableWidget_2.setRowCount(0) 
+            self.tela_ativar_tarefa.tableWidget_2.setRowCount(0)
 
             mensagem = "abrir_con"
             cliente_socket.send(mensagem.encode())
@@ -400,22 +402,26 @@ class Main(QMainWindow, Ui_main):
             recebida = cliente_socket.recv(1024).decode()
 
             if recebida == '0':
-                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
+                QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
             else:
-                lista = recebida.split(";")
-                if lista:
-                    for item in lista:
-                        if item != "":
-                            valores = item.split(',') 
-                            linha = self.tela_ativar_tarefa.tableWidget_2.rowCount()
-                            self.tela_ativar_tarefa.tableWidget_2.insertRow(linha)
-                            # Insert each value into the respective column of the table
-                            for coluna, valor in enumerate(valores):
-                                self.tela_ativar_tarefa.tableWidget_2.setItem(linha, coluna, QTableWidgetItem(str(valor)))
-                else:
-                    QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa concluída encontrada.")
+                tarefas_str = recebida.strip(';')
+                tarefas_lista = tarefas_str.split(';')
+                for tarefa_str in tarefas_lista:
+                    tarefa_dados = tarefa_str.split(' - ')
+                    if len(tarefa_dados) == 4:
+                        tarefa_id = tarefa_dados[0]
+                        tarefa_nome = tarefa_dados[1]
+                        tarefa_descricao = tarefa_dados[2]
+                        tarefa_prazo = tarefa_dados[3]
+
+                        linha = self.tela_ativar_tarefa.tableWidget_2.rowCount()
+                        self.tela_ativar_tarefa.tableWidget_2.insertRow(linha)
+                        self.tela_ativar_tarefa.tableWidget_2.setItem(linha, 0, QTableWidgetItem(tarefa_id))
+                        self.tela_ativar_tarefa.tableWidget_2.setItem(linha, 1, QTableWidgetItem(tarefa_nome))
+                        self.tela_ativar_tarefa.tableWidget_2.setItem(linha, 2, QTableWidgetItem(tarefa_descricao))
+                        self.tela_ativar_tarefa.tableWidget_2.setItem(linha, 3, QTableWidgetItem(tarefa_prazo))
         except Exception as e:
-            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas concluídas: {e}")
+            QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
 
     def abrir_tela_buscar_tarefa(self):
         """
@@ -440,19 +446,25 @@ class Main(QMainWindow, Ui_main):
             if recebida == '0':
                 QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
             else:
-                lista = recebida.split(";")
-                if lista:
-                    for item in lista:
-                        if item != "":
-                            valores = item.split(',')  # Split by comma to get individual values
-                            linha = self.tela_buscar_tarefa.tableWidget.rowCount()
-                            self.tela_buscar_tarefa.tableWidget.insertRow(linha)
-                            # Insert each value into the respective column of the table
-                            for coluna, valor in enumerate(valores):
-                                self.tela_buscar_tarefa.tableWidget.setItem(linha, coluna, QTableWidgetItem(str(valor)))
+                tarefas_str = recebida.strip(';')
+                tarefas_lista = tarefas_str.split(';')
+                for tarefa_str in tarefas_lista:
+                    tarefa_dados = tarefa_str.split(' - ')
+                    if len(tarefa_dados) == 4:
+                        tarefa_id = tarefa_dados[0]
+                        tarefa_nome = tarefa_dados[1]
+                        tarefa_descricao = tarefa_dados[2]
+                        tarefa_prazo = tarefa_dados[3]
+
+                        linha = self.tela_buscar_tarefa.tableWidget.rowCount()
+                        self.tela_buscar_tarefa.tableWidget.insertRow(linha)
+                        self.tela_buscar_tarefa.tableWidget.setItem(linha, 0, QTableWidgetItem(tarefa_id))
+                        self.tela_buscar_tarefa.tableWidget.setItem(linha, 1, QTableWidgetItem(tarefa_nome))
+                        self.tela_buscar_tarefa.tableWidget.setItem(linha, 2, QTableWidgetItem(tarefa_descricao))
+                        self.tela_buscar_tarefa.tableWidget.setItem(linha, 3, QTableWidgetItem(tarefa_prazo))
         except Exception as e:
             QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
-                  
+
     def cadastrar_tarefa(self):
         """
         Cadastra uma nova tarefa com base nos dados fornecidos.
@@ -612,29 +624,26 @@ class Main(QMainWindow, Ui_main):
         Exception
             Se ocorrer algum erro ao editar a tarefa.
         """
-        try:
-            # Extrair as informações do item selecionado
-            id_tarefa, titulo, descricao, prazo = item.text().split(" - ")
+        # Extrair as informações do item selecionado
+        id_tarefa, titulo, descricao, prazo = item.text().split(" - ")
 
-            # Exibir um diálogo para o usuário editar a descrição e o prazo
-            titulo_editado, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar título da tarefa:", QLineEdit.Normal, titulo)
+        # Exibir um diálogo para o usuário editar a descrição e o prazo
+        titulo_editado, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar título da tarefa:", QLineEdit.Normal, titulo)
+        if ok:
+            descricao_editada, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar descrição da tarefa:", QLineEdit.Normal, descricao)
             if ok:
-                descricao_editada, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar descrição da tarefa:", QLineEdit.Normal, descricao)
+                prazo_editado, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar prazo da tarefa:", QLineEdit.Normal, prazo)
                 if ok:
-                    prazo_editado, ok = QInputDialog.getText(self, "Editar Tarefa", "Editar prazo da tarefa:", QLineEdit.Normal, prazo)
-                    if ok:
-                        # Separar a descrição, o título e o prazo editados
-                        novo_titulo, nova_descricao, novo_prazo = titulo_editado.strip(), descricao_editada.strip(), prazo_editado.strip()
+                    # Separar a descrição, o título e o prazo editados
+                    novo_titulo, nova_descricao, novo_prazo = titulo_editado.strip(), descricao_editada.strip(), prazo_editado.strip()
 
-                        # Chamar a função para atualizar a tarefa
-                        if self.atualizar_tarefa(id_tarefa, novo_titulo, nova_descricao, novo_prazo):
-                            QMessageBox.information(self, "Editar Tarefa", "Tarefa atualizada com sucesso!")
-                            self.abrir_tela_buscar_tarefa()  # Atualizar o campo list widget após a atualização da tarefa
-                        else:
-                            QMessageBox.warning(self, "Editar Tarefa", "Erro ao atualizar a tarefa.")
-        except Exception as e:
-            QMessageBox.warning(self, "Editar Tarefa", f"Erro ao editar a tarefa: {e}")
-
+                    # Chamar a função para atualizar a tarefa
+                    if self.atualizar_tarefa(id_tarefa, novo_titulo, nova_descricao, novo_prazo):
+                        QMessageBox.information(self, "Editar Tarefa", "Tarefa atualizada com sucesso!")
+                        self.abrir_tela_buscar_tarefa()  # Atualizar o campo list widget após a atualização da tarefa
+                    else:
+                        QMessageBox.warning(self, "Editar Tarefa", "Erro ao atualizar a tarefa.")
+    
     def atualizar_tarefa(self, id_tarefa, novo_titulo, nova_descricao, novo_prazo):
         """
         Atualiza uma tarefa existente no banco de dados.

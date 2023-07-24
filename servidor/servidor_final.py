@@ -2,6 +2,8 @@ from banco import Banco
 from tarefa import Tarefa
 from usuario import Usuario
 
+import json
+
 import threading
 import socket
 
@@ -71,10 +73,10 @@ class ThreadCliente(threading.Thread):
                 else:
                     self.con.send('0'.encode())
 
-            # Listar tarefas
             elif comando[0] == 'abrir':
                 with lock:
-                    retorno_cliente = self.bank.listarTarefasNaoConcluidas()
+                    tarefas = self.bank.listarTarefasNaoConcluidas()
+                    retorno_cliente = json.dumps(tarefas)
 
                 if retorno_cliente:
                     self.con.send(retorno_cliente.encode())
@@ -84,7 +86,8 @@ class ThreadCliente(threading.Thread):
             # Listar tarefas concluidas
             elif comando[0] == 'abrir_con':
                 with lock:
-                    retorno_cliente = self.bank.listarTarefasConcluidas()
+                    tarefas = self.bank.listarTarefasConcluidas()
+                    retorno_cliente = json.dumps(tarefas)
 
                 if retorno_cliente:
                     self.con.send(retorno_cliente.encode())
@@ -183,7 +186,7 @@ def iniciar_servidor():
     Este metodo cria um socket para o servidor, define o endereço IP e a porta para a comunicacao. Em seguida, ele aguarda conexoes de clientes.
 
     """
-    ip = '192.168.18.36'
+    ip = '10.180.47.135'
     port = 9017
 
     addr = (ip, port)  # Define a tupla de endereço
