@@ -21,6 +21,9 @@ addr = ((ip, port))
 cliente_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 cliente_socket.connect(addr)
 
+from PyQt5.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QScrollArea, QWidget, QSizePolicy
+
+
 class Ui_main(QtWidgets.QWidget):
     """
     Classe responsavel por configurar a interface grafica da janela principal da aplicacao.
@@ -297,6 +300,8 @@ class Main(QMainWindow, Ui_main):
                 dialog = QMessageBox(self)
                 dialog.setWindowTitle("Notificação de Tarefas")  # Definir o título da caixa de diálogo
 
+                dialog.resize(400, 300)  # Definir as dimensões desejadas da janela
+
                 # Criar um widget para adicionar o layout
                 widget = QWidget(dialog)
                 dialog.layout().addWidget(widget)
@@ -310,6 +315,11 @@ class Main(QMainWindow, Ui_main):
 
                 # Criar uma área de rolagem para exibir as tarefas
                 scroll_area = QScrollArea(dialog)
+
+                scroll_area.setFixedHeight(120)
+
+                scroll_area.setFixedWidth(250)
+
                 scroll_area.setWidgetResizable(True)
                 scroll_widget = QWidget(scroll_area)
                 scroll_area.setWidget(scroll_widget)
@@ -317,6 +327,9 @@ class Main(QMainWindow, Ui_main):
 
                 # Criar um layout vertical para adicionar os widgets de tarefas
                 layout_tarefas = QVBoxLayout(scroll_widget)
+
+                # Adicionar o botão "Ok" padrão
+                dialog.addButton(QMessageBox.Ok)
 
                 for i, vencimento_titulo in enumerate(vencimento_tarefas):
                     dias, titulo = vencimento_titulo.strip("[] ").split("|")
@@ -333,8 +346,10 @@ class Main(QMainWindow, Ui_main):
                     label_tarefa.setStyleSheet(estilo_tarefa)
                     layout_tarefas.addWidget(label_tarefa)
 
-                # Ajustar o tamanho da caixa de diálogo
-                dialog.adjustSize()
+                # Criar um espaço vazio (QWidget) para separar o botão "Ok" da parte superior da caixa de diálogo
+                spacer = QWidget(dialog)
+                spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                layout.addWidget(spacer)
 
                 # Exibir a caixa de diálogo personalizada
                 dialog.exec_()
@@ -421,46 +436,56 @@ class Main(QMainWindow, Ui_main):
             QMessageBox.critical(self, "Tarefas Concluídas", f"Erro ao obter a lista de tarefas concluídas: {e}")
 
     def abrir_tela_buscar_tarefa(self):
-        """
-        Abre a tela de busca de tarefa.
-
-        Altera o índice da pilha de widgets para exibir a tela de busca de tarefa.
-
-        Raises
-        ------
-        QMessageBox
-            Se ocorrer um erro ao obter a lista de tarefas.
-        """
         try:
+            # Altera o índice da pilha de widgets para exibir a tela de busca de tarefa
             self.QtStack.setCurrentIndex(4)
+
+            # Limpa todas as linhas da tabela (tableWidget)
             self.tela_buscar_tarefa.tableWidget.setRowCount(0)
 
+            # Envia uma mensagem para o servidor solicitando a lista de tarefas
             mensagem = "abrir"
             cliente_socket.send(mensagem.encode())
 
+            # Recebe a resposta do servidor
             recebida = cliente_socket.recv(1024).decode()
             print(recebida)
 
             if recebida == '0':
+                # Se o servidor responde com '0', significa que nenhuma tarefa foi encontrada
                 QMessageBox.information(self, "Buscar Tarefa", "Nenhuma tarefa encontrada.")
             else:
+                # Se o servidor responde com algo diferente de '0', existem tarefas a serem exibidas
+                # O formato da resposta é: "id - nome - descrição - prazo;id - nome - descrição - prazo;..."
                 tarefas_str = recebida.strip(';')
                 tarefas_lista = tarefas_str.split(';')
+
+                # Itera sobre cada tarefa na lista e atualiza a tabela com os dados das tarefas
                 for tarefa_str in tarefas_lista:
                     tarefa_dados = tarefa_str.split(' - ')
                     if len(tarefa_dados) == 4:
-                        tarefa_id = tarefa_dados[0].strip('()"')  # Remover as aspas do ID, se existirem
+                        tarefa_id = tarefa_dados[0].strip('()"')  # Remove as aspas do ID, se existirem
                         tarefa_nome = tarefa_dados[1]
                         tarefa_descricao = tarefa_dados[2]
                         tarefa_prazo = tarefa_dados[3]
 
+                        # Insere uma nova linha na tabela e adiciona os dados da tarefa nessa linha
                         linha = self.tela_buscar_tarefa.tableWidget.rowCount()
                         self.tela_buscar_tarefa.tableWidget.insertRow(linha)
                         self.tela_buscar_tarefa.tableWidget.setItem(linha, 0, QTableWidgetItem(tarefa_id))
                         self.tela_buscar_tarefa.tableWidget.setItem(linha, 1, QTableWidgetItem(tarefa_nome))
                         self.tela_buscar_tarefa.tableWidget.setItem(linha, 2, QTableWidgetItem(tarefa_descricao))
                         self.tela_buscar_tarefa.tableWidget.setItem(linha, 3, QTableWidgetItem(tarefa_prazo))
+
+                        # Define os dados associados à célula na tabela
+                        # Os dados associados serão usados posteriormente pela função editar_tarefa_linha
+                        item = self.tela_buscar_tarefa.tableWidget.item(linha, 0)
+                        item.setData(QtCore.Qt.UserRole + 1, tarefa_nome)  # Dado associado ao título da tarefa
+                        item.setData(QtCore.Qt.UserRole + 2, tarefa_descricao)  # Dado associado à descrição da tarefa
+                        item.setData(QtCore.Qt.UserRole + 3, tarefa_prazo)  # Dado associado ao prazo da tarefa
+
         except Exception as e:
+            # Exibe uma mensagem de erro caso ocorra alguma exceção durante o processo
             QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
 
     def cadastrar_tarefa(self):
@@ -587,28 +612,36 @@ class Main(QMainWindow, Ui_main):
 
     def editar_tarefa_linha(self):
         try:
+            # Obtém o item selecionado na tabela (célula atualmente selecionada)
             item_selecionado = self.tela_buscar_tarefa.tableWidget.currentItem()
 
             if item_selecionado is not None:
-                # Verificar se o usuário clicou na primeira coluna (coluna do ID da tarefa)
+                # Verifica se o usuário clicou na primeira coluna (coluna do ID da tarefa)
                 coluna_selecionada = self.tela_buscar_tarefa.tableWidget.currentColumn()
                 if coluna_selecionada != 0:
-                    QMessageBox.warning(self, "Editar Tarefa", "Apenas pelo o ID da tarefa. Clique, e, edite as informacoes.")
+                    # Se a coluna selecionada não for a coluna do ID da tarefa, exibe uma mensagem de aviso
+                    QMessageBox.warning(self, "Editar Tarefa", "Apenas pelo ID da tarefa. Clique e edite as informações.")
                     return
 
-                # Obtém o ID da tarefa a partir do texto do item selecionado
+                # Obtém o ID da tarefa a partir do texto do item selecionado (assumindo que o ID está antes do primeiro " - ")
                 id_tarefa = item_selecionado.text().split(" - ")[0]
 
-                # Exibir uma caixa de diálogo para editar os campos da tarefa
-                novo_titulo, ok1 = QInputDialog.getText(self, "Editar Tarefa", "Novo título:", QLineEdit.Normal)
-                nova_descricao, ok2 = QInputDialog.getText(self, "Editar Tarefa", "Nova descrição:", QLineEdit.Normal)
-                novo_prazo, ok3 = QInputDialog.getText(self, "Editar Tarefa", "Novo prazo (formato yyyy-mm-dd):", QLineEdit.Normal)
+                # Obtém os valores atuais da tarefa diretamente dos dados associados ao item
+                titulo_atual = item_selecionado.data(QtCore.Qt.UserRole + 1)  # Assumindo que a coluna do título é a coluna 1
+                descricao_atual = item_selecionado.data(QtCore.Qt.UserRole + 2)  # Assumindo que a coluna da descrição é a coluna 2
+                prazo_atual = item_selecionado.data(QtCore.Qt.UserRole + 3)  # Assumindo que a coluna do prazo é a coluna 3
 
-                # Verificar se o usuário pressionou "Cancelar" em alguma caixa de diálogo
-                if not (ok1 or ok2 or ok3):
+                # Exibe caixas de diálogo para que o usuário possa editar os campos da tarefa
+                novo_titulo, ok1 = QInputDialog.getText(self, "Editar Tarefa", "Novo título:", QLineEdit.Normal, titulo_atual)
+                nova_descricao, ok2 = QInputDialog.getText(self, "Editar Tarefa", "Nova descrição:", QLineEdit.Normal, descricao_atual)
+                novo_prazo, ok3 = QInputDialog.getText(self, "Editar Tarefa", "Novo prazo (formato yyyy-mm-dd):", QLineEdit.Normal, prazo_atual)
+
+                # Caso o usuário tenha pressionado "Ok" em alguma caixa de diálogo, mas "Cancelar" e outras, todas em cancel.
+                if (ok1 and not ok2) or (ok1 and not ok3) or (ok2 and not ok1) or (ok2 and not ok3) or (ok3 and not ok1) or (ok3 and not ok2) or not (ok1 or ok2 or ok3):
+                    QMessageBox.warning(self, "Editar Tarefa", "Operação cancelada. Nenhum campo foi atualizado.")
                     return
 
-                # Montar a mensagem com os dados atualizados da tarefa
+                # Monta a mensagem com os dados atualizados da tarefa
                 mensagem = f"atualizar_tarefa,{id_tarefa}"
 
                 if ok1:
@@ -618,26 +651,39 @@ class Main(QMainWindow, Ui_main):
                 if ok3:
                     mensagem += f",{novo_prazo}"
 
-                # Enviar a mensagem para o servidor
+                # Envia a mensagem para o servidor (cliente_socket é usado aqui, mas não é definido no código)
                 cliente_socket.send(mensagem.encode())
 
-                # Aguardar a resposta do servidor
+                # Aguarda a resposta do servidor
                 resposta = cliente_socket.recv(1024).decode()
 
                 if resposta == '1':
-                    # Atualizar os campos da tarefa na tabela
-                    titulo_atualizado = novo_titulo if ok1 else item_selecionado.text().split(" - ")[1]
-                    descricao_atualizada = nova_descricao if ok2 else item_selecionado.text().split(" - ")[2]
-                    prazo_atualizado = novo_prazo if ok3 else item_selecionado.text().split(" - ")[3]
+                    # Atualiza os campos da tarefa na tabela
+                    titulo_atualizado = novo_titulo if ok1 else titulo_atual
+                    descricao_atualizada = nova_descricao if ok2 else descricao_atual
+                    prazo_atualizado = novo_prazo if ok3 else prazo_atual
 
+                    # Atualiza os dados da tarefa na tabela (os dados associados ao item)
+                    item_selecionado.setData(QtCore.Qt.UserRole + 1, titulo_atualizado)
+                    item_selecionado.setData(QtCore.Qt.UserRole + 2, descricao_atualizada)  
+                    item_selecionado.setData(QtCore.Qt.UserRole + 3, prazo_atualizado)  
+
+                    # Atualiza o texto do item na tabela com as informações atualizadas da tarefa
                     item_selecionado.setText(f"{id_tarefa} - {titulo_atualizado} - {descricao_atualizada} - {prazo_atualizado}")
+
+                    # Abre novamente a tela de busca de tarefa (talvez para atualizar a tabela)
                     self.abrir_tela_buscar_tarefa()
+
+                    # Exibe uma mensagem de informação para indicar que a tarefa foi editada com sucesso
                     QMessageBox.information(self, "Editar Tarefa", "Tarefa editada com sucesso!")
                 else:
+                    # Se a resposta do servidor não for '1', exibe uma mensagem de aviso sobre o erro na edição
                     QMessageBox.warning(self, "Editar Tarefa", "Erro ao editar a tarefa.")
             else:
+                # Se nenhum item estiver selecionado na tabela, exibe uma mensagem de aviso
                 QMessageBox.warning(self, "Editar Tarefa", "Selecione uma tarefa para editá-la.")
         except Exception as e:
+            # Exibe uma mensagem de aviso caso ocorra algum erro durante o processo de edição da tarefa
             QMessageBox.warning(self, "Editar Tarefa", f"Ocorreu um erro ao editar a tarefa: {str(e)}")
 
     def loginUser(self):

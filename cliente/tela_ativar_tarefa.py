@@ -35,6 +35,7 @@ class Tela_ativar(object):
         self.tableWidget_2 = QtWidgets.QTableWidget(Cadastro)
         self.tableWidget_2.setGeometry(QtCore.QRect(40, 140, 631, 371))
         self.tableWidget_2.setObjectName("tableWidget_2")
+        self.tableWidget_2.setStyleSheet("background-color: rgb(255, 255, 255);")  # Add this line
         self.tableWidget_2.setColumnCount(4)
         self.tableWidget_2.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()

@@ -27,6 +27,7 @@ class Tela_buscar_tarefa(object):
         self.tableWidget = QtWidgets.QTableWidget(Cadastro)
         self.tableWidget.setGeometry(QtCore.QRect(50, 130, 631, 371))
         self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setStyleSheet("background-color: rgb(255, 255, 255);")  # Add this line
         self.tableWidget.setColumnCount(4)
         self.tableWidget.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
