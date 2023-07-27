@@ -1,6 +1,6 @@
 # Projeto: Sistema de Gerenciamento de Tarefas
 
-## Este é um projeto de um Sistema de Gerenciamento de Tarefas desenvolvido utilizando a biblioteca PyQt5 para a interface gráfica e sockets para a comunicação entre cliente e servidor. O sistema permite que os usuários realizem o cadastro, busca, edição e conclusão de tarefas.
+<nobr>## Este é um projeto de um Sistema de Gerenciamento de Tarefas desenvolvido utilizando a biblioteca PyQt5 para a interface gráfica e sockets para a comunicação entre cliente e servidor. O sistema permite que os usuários realizem o cadastro, busca, edição e conclusão de tarefas.</nobr>
 
 ## Funcionalidades
 
