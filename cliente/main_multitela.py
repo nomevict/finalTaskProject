@@ -339,8 +339,8 @@ class Main(QMainWindow, Ui_main):
                 # Exibir a caixa de diálogo personalizada
                 dialog.exec_()
         except Exception as e:
-            # Exibir caixa de diálogo de informação em caso de erro
-            QMessageBox.information(None, 'interface', f'Erro. Possui tarefas ? {str(e)}')
+            # Exibir mensagem personalizada em caso de erro
+            QMessageBox.information(self, 'interface', 'Erro. Você não possui tarefas!')
 
     def cadastrar_usuario(self):
         """
