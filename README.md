@@ -1,7 +1,9 @@
 # Projeto: Sistema de Gerenciamento de Tarefas
+
 ## Este é um projeto de um Sistema de Gerenciamento de Tarefas desenvolvido utilizando a biblioteca PyQt5 para a interface gráfica e sockets para a comunicação entre cliente e servidor. O sistema permite que os usuários realizem o cadastro, busca, edição e conclusão de tarefas.
 
 ## Funcionalidades
+
 ### Interface Gráfica
 O sistema possui uma interface gráfica que é composta por diferentes telas, representadas pelas classes abaixo:
 
@@ -23,7 +25,7 @@ O servidor é responsável por gerenciar as operações do sistema e atender as 
 - Edição de Tarefa: O servidor recebe informações atualizadas de uma tarefa (nome, descrição e prazo) e realiza a atualização dos dados da tarefa correspondente.
 - Conclusão de Tarefa: O servidor recebe a solicitação de conclusão de uma tarefa e a marca como concluída.
 - Tarefas Concluídas: O servidor fornece ao cliente a lista de tarefas concluídas para o usuário logado.
-- Reativação de Tarefa: O servidor recebe a solicitação de reativação de uma tarefa concluída e a marca como pendente novamente.
+- Reativação de Tarefa: O servidor recebe a solicitação de reativação de uma tarefa concluída e a marca como pendente novamente, entre outras.
 
 ### Comunicação Cliente-Servidor
 O sistema utiliza sockets para a comunicação entre cliente e servidor. O cliente é responsável por enviar as solicitações ao servidor e receber as respostas correspondentes.
@@ -46,7 +48,12 @@ Essas funções são responsáveis por permitir a navegação entre as telas, in
 
 ## Observações
 O projeto utiliza o módulo socket para a comunicação entre cliente e servidor. Certifique-se de que o servidor esteja em execução e acessível no endereço IP e porta especificados (10.180.44.80:9017). Caso o endereço ou a porta do servidor sejam diferentes, é necessário atualizar esses valores no código.
+
+### Banco de Dados
+O sistema utiliza um banco de dados para armazenar as informações dos usuários e tarefas. É importante garantir que o banco de dados esteja configurado corretamente e acessível para o funcionamento adequado do sistema.
+
 Algumas funções relacionadas ao cadastro e manipulação de tarefas podem conter verificações adicionais para garantir a integridade e segurança dos dados, como validação de campos e tratamento de exceções. Estas verificações podem ser implementadas de acordo com as necessidades específicas do projeto.
+
 O projeto utiliza uma estrutura básica de interface gráfica para a demonstração das funcionalidades. É possível estender e personalizar a interface para melhor atender aos requisitos do projeto final.
 
 Esse é um resumo das principais funcionalidades do sistema de gerenciamento de tarefas. Para a implementação completa e funcional do projeto, é necessário integrar o código fornecido com as classes de interface gráfica (Tela_login, Tela_inicial, etc.) e as classes responsáveis por realizar as operações no servidor. Além disso, podem ser implementadas outras funcionalidades adicionais conforme as necessidades do projeto.
