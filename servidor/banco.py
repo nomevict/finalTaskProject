@@ -4,7 +4,7 @@ from mysql.connector import Error
 
 # importacao das classes
 from usuario import Usuario
-from datetime import datetime, date
+from datetime import date
 
 class Banco:
     """
@@ -185,6 +185,7 @@ class Banco:
                 # Inserir o novo usuario na tabela
                 query_usuario = "INSERT INTO usuario (nome, email, username, password) VALUES (%s, %s, %s, %s)"
                 values_usuario = (usuario.nome, usuario.email, usuario.username, usuario.senha)
+                print(values_usuario)
                 self.cursor.execute(query_usuario, values_usuario)
                 self.connection.commit()
                 print(f'Usuario {usuario.username} cadastrado com sucesso!')

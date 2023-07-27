@@ -1,6 +1,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Tela_buscar_tarefa(object):
+    """
+    Classe que configura a interface grafica de buscar a tarefa.
+
+    Responsavel por configurar a interface grafica da janela de buscar das tarefas utilizando a biblioteca PyQt5.
+    """
     def setupUi(self, Cadastro):
         Cadastro.setObjectName("Cadastro")
         Cadastro.resize(723, 610)

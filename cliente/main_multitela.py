@@ -14,7 +14,7 @@ from tela_funcoes_tarefas import Tela_funcoes_tarefa
 from datetime import datetime
 
 import socket
-ip = '192.168.18.36'
+ip = '10.180.44.80'
 port = 9017
 addr = ((ip, port))
 
@@ -268,39 +268,27 @@ class Main(QMainWindow, Ui_main):
             raise Exception(f"Erro ao encerrar a conexão com o servidor: {e}")
     
     def quantidade_tarefas_pendentes(self):
-        """
-        Recebe uma mensagem do servidor e exibe uma caixa de diálogo com a quantidade de tarefas pendentes.
-
-        Essa função envia uma solicitação ao servidor para obter a quantidade de tarefas pendentes e exibe o resultado em uma caixa de diálogo personalizada.
-
-        Returns:
-        --------
-        None
-            O método não possui um valor de retorno especificado e, por padrão, retorna None.
-
-        Raises:
-        -------
-        QMessageBox
-            Se ocorrer algum erro ao obter a lista de tarefas pendentes.
-        """
         try:
-            # Mensagem do cliente
+            # Enviar mensagem ao servidor para obter a lista de tarefas pendentes
             mensagem = 'notificacao'
             cliente_socket.send(mensagem.encode())
 
+            # Receber resposta do servidor
             resposta = cliente_socket.recv(1024).decode()
+
             if resposta == '0':
+                # Exibir aviso se houver erro ao obter as tarefas
                 QMessageBox.warning(self, "Buscar Tarefa", "Erro ao obter a lista de tarefas.")
             else:
+                # Processar a resposta e exibir a caixa de diálogo personalizada com as tarefas pendentes
                 valores = resposta.split(",")
                 quantidade_tarefas = int(valores[0])
                 vencimento_tarefas = valores[1:]
 
-                # Criar uma caixa de diálogo personalizada
+                # Criar a caixa de diálogo personalizada
                 dialog = QMessageBox(self)
-                dialog.setWindowTitle("Notificação de Tarefas")  # Definir o título da caixa de diálogo
-
-                dialog.resize(400, 300)  # Definir as dimensões desejadas da janela
+                dialog.setWindowTitle("Notificação de Tarefas")
+                dialog.resize(400, 300)
 
                 # Criar um widget para adicionar o layout
                 widget = QWidget(dialog)
@@ -315,11 +303,8 @@ class Main(QMainWindow, Ui_main):
 
                 # Criar uma área de rolagem para exibir as tarefas
                 scroll_area = QScrollArea(dialog)
-
                 scroll_area.setFixedHeight(120)
-
                 scroll_area.setFixedWidth(250)
-
                 scroll_area.setWidgetResizable(True)
                 scroll_widget = QWidget(scroll_area)
                 scroll_area.setWidget(scroll_widget)
@@ -336,10 +321,10 @@ class Main(QMainWindow, Ui_main):
                     dias = int(dias)
                     if dias >= 0:
                         mensagem_tarefa = f"Tarefa {i+1} ({titulo}) - faltam {dias} dias"
-                        estilo_tarefa = "QLabel { color: green; }"  # Estilo personalizado para tarefa pendente
+                        estilo_tarefa = "QLabel { color: green; }"
                     else:
                         mensagem_tarefa = f"Tarefa {i+1} ({titulo}) - Vencida."
-                        estilo_tarefa = "QLabel { color: red; }"  # Estilo personalizado para tarefa vencida
+                        estilo_tarefa = "QLabel { color: red; }"
 
                     # Criar um rótulo com a mensagem da tarefa
                     label_tarefa = QLabel(mensagem_tarefa)
@@ -354,18 +339,20 @@ class Main(QMainWindow, Ui_main):
                 # Exibir a caixa de diálogo personalizada
                 dialog.exec_()
         except Exception as e:
-            QMessageBox.information(None, 'interface', f'Erro: {str(e)}')
+            # Exibir caixa de diálogo de informação em caso de erro
+            QMessageBox.information(None, 'interface', f'Erro. Voce não possui tarefas: {str(e)}')
+
 
     def cadastrar_usuario(self):
         """
-        Cadastra um novo usuario com base nos dados fornecidos.
+        Cadastra um novo usuário com base nos dados fornecidos.
 
-        Envia os dados do novo usuario para o servidor e exibe uma caixa de dialogo com o resultado do cadastro.
+        Envia os dados do novo usuário para o servidor e exibe uma caixa de diálogo com o resultado do cadastro.
 
         Raises
         ------
-        QMessageBox
-            Se algum campo nao for preenchido.
+        ValueError
+            Se algum campo não for preenchido.
         """
         try:
             nome = self.tela_cadastro_usuario.nome_lineEdit.text()
@@ -373,26 +360,32 @@ class Main(QMainWindow, Ui_main):
             username = self.tela_cadastro_usuario.username_lineEdit.text()
             senha = self.tela_cadastro_usuario.password_lineEdit.text()
 
-            if not (nome == '' or email == '' or username == '' or senha == ''):
-                mensagem = f'cad_usuario,{nome},{username},{email},{senha}'
-                cliente_socket.send(mensagem.encode())
-                print('mensagem enviada')
-                recebida = cliente_socket.recv(1024).decode()
-                if recebida == '1':
-                    QMessageBox.information(None, 'interface', 'Cadastro realizado com sucesso!')
-                    self.tela_cadastro_usuario.nome_lineEdit.setText('')
-                    self.tela_cadastro_usuario.email_lineEdit.setText('')
-                    self.tela_cadastro_usuario.username_lineEdit.setText('')
-                    self.tela_cadastro_usuario.password_lineEdit.setText('')
-                elif recebida == '0':
-                    QMessageBox.information(None, 'interface', 'ID ja cadastrado!')
-                else:
-                    raise QMessageBox("interface", 'Erro de conexao cliente-servidor!')
+            if not (nome and email and username and senha):
+                raise ValueError("Cadastro não realizado! Informe todos os campos.")
+
+            mensagem = f'cad_usuario,{nome},{email},{username},{senha}'
+            cliente_socket.send(mensagem.encode())
+            print('mensagem enviada')
+            recebida = cliente_socket.recv(1024).decode()
+
+            if recebida == '1':
+                QMessageBox.information(None, 'Interface', 'Cadastro realizado com sucesso!')
+                self.tela_cadastro_usuario.nome_lineEdit.setText('')
+                self.tela_cadastro_usuario.email_lineEdit.setText('')
+                self.tela_cadastro_usuario.username_lineEdit.setText('')
+                self.tela_cadastro_usuario.password_lineEdit.setText('')
+            elif recebida == '0':
+                QMessageBox.warning(None, 'Interface', 'ID já cadastrado!')
             else:
-                raise QMessageBox(None, 'interface', 'Cadastro nao realizado! Informe todos os campos.')
+                raise ConnectionError('Erro de conexão cliente-servidor!')
+
+        except ValueError as ve:
+            QMessageBox.warning(None, 'Interface', str(ve))
+        except ConnectionError as ce:
+            QMessageBox.warning(None, 'Interface', str(ce))
         except Exception as e:
-            raise QMessageBox(None, 'interface', f'Erro ao cadastrar o usuário: {str(e)}')
-        
+            QMessageBox.critical(None, 'Interface', f'Erro ao cadastrar o usuário: {str(e)}')
+
     def abrir_tela_tarefa_concluida(self):
         """
         Abre a tela de tarefas concluídas.
@@ -436,6 +429,17 @@ class Main(QMainWindow, Ui_main):
             QMessageBox.critical(self, "Tarefas Concluídas", f"Erro ao obter a lista de tarefas concluídas: {e}")
 
     def abrir_tela_buscar_tarefa(self):
+        """
+        Abre a tela de busca de tarefas.
+
+        Esta função altera o índice da pilha de widgets para exibir a tela de busca de tarefas. Ela envia uma mensagem ao
+        servidor solicitando a lista de tarefas, recebe a resposta e atualiza a tabela com os dados das tarefas encontradas.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro ao obter a lista de tarefas do servidor.
+        """
         try:
             # Altera o índice da pilha de widgets para exibir a tela de busca de tarefa
             self.QtStack.setCurrentIndex(4)
@@ -488,6 +492,7 @@ class Main(QMainWindow, Ui_main):
             # Exibe uma mensagem de erro caso ocorra alguma exceção durante o processo
             QMessageBox.critical(self, "Buscar Tarefa", f"Erro ao obter a lista de tarefas: {e}")
 
+
     def cadastrar_tarefa(self):
         """
         Cadastra uma nova tarefa com base nos dados fornecidos.
@@ -523,7 +528,7 @@ class Main(QMainWindow, Ui_main):
                     self.tela_cadastro_tarefa.prazo_lineEdit.setText('')
 
                 elif recebida == '3':
-                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de integridade. Banco de Dados!')
+                    QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de integridade! Não utilize CARACTERES!')
                 else:
                     QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', 'Erro de conexão cliente-servidor!')
 
@@ -533,6 +538,16 @@ class Main(QMainWindow, Ui_main):
             QMessageBox(None).critical(self, 'Erro ao cadastrar a tarefa', f'Erro ao cadastrar a tarefa: {str(e)}')
 
     def excluir_tarefa_linha(self):
+        """
+        Exclui uma tarefa selecionada da tabela.
+
+        Esta função é responsável por excluir uma tarefa da tabela de tarefas concluídas (tela_ativar_tarefa). Ao clicar em uma tarefa na tabela, o usuário pode excluir a tarefa selecionada pelo ID. A função envia uma mensagem ao servidor para excluir a tarefa com base no ID e, em caso de sucesso, remove a linha correspondente da tabela.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro ao excluir a tarefa ou se nenhum item estiver selecionado para exclusão.
+        """
         try:
             item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
@@ -559,6 +574,17 @@ class Main(QMainWindow, Ui_main):
             QMessageBox.warning(self, "Excluir Tarefa", f"Erro ao excluir a tarefa: {e}")
 
     def concluir_tarefa_linha(self):
+        """
+        Conclui uma tarefa selecionada da tabela.
+
+        Esta função é responsável por concluir uma tarefa da tabela de busca de tarefas (tela_buscar_tarefa). Ao clicar em uma tarefa na tabela, o usuário pode concluir a tarefa selecionada pelo ID. A função envia uma mensagem ao servidor para concluir a tarefa com base no ID e, em caso de sucesso, remove a linha correspondente da tabela.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro ao concluir a tarefa ou se nenhum item estiver selecionado para conclusão.
+
+        """
         try:
             item_selecionado = self.tela_buscar_tarefa.tableWidget.currentItem()
 
@@ -585,6 +611,17 @@ class Main(QMainWindow, Ui_main):
             QMessageBox.warning(self, "Concluir Tarefa", f"Erro ao concluir a tarefa: {e}")
 
     def reativar_tarefa_linha(self):
+        """
+        Reativa uma tarefa selecionada da tabela.
+
+        Esta função é responsável por reativar uma tarefa da tabela de tarefas concluídas (tela_ativar_tarefa). Ao clicar em uma tarefa na tabela, o usuário pode reativar a tarefa selecionada pelo ID. A função envia uma mensagem ao servidor para reativar a tarefa com base no ID e, em caso de sucesso, remove a linha correspondente da tabela.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro ao reativar a tarefa ou se nenhum item estiver selecionado para reativação.
+
+        """
         try:
             item_selecionado = self.tela_ativar_tarefa.tableWidget_2.currentItem()
 
@@ -611,6 +648,24 @@ class Main(QMainWindow, Ui_main):
             QMessageBox.warning(self, "Reativar Tarefa", f"Erro ao reativar a tarefa: {e}")
 
     def editar_tarefa_linha(self):
+        """
+        Editar uma tarefa selecionada na tabela de busca de tarefas.
+
+        Esta função permite ao usuário editar os campos de uma tarefa diretamente na tabela de busca de tarefas (tela_buscar_tarefa). O usuário pode editar o título, descrição e/ou prazo da tarefa selecionada na tabela. A função exibe caixas de diálogo para que o usuário insira as novas informações. Após a edição, a função envia uma mensagem ao servidor com os dados atualizados da tarefa. Se a edição for bem-sucedida, a tabela é atualizada para refletir as mudanças e uma mensagem de sucesso é exibida.
+
+        Raises
+        ------
+        QMessageBox
+            Se ocorrer um erro durante o processo de edição ou se nenhum item estiver selecionado para edição.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         try:
             # Obtém o item selecionado na tabela (célula atualmente selecionada)
             item_selecionado = self.tela_buscar_tarefa.tableWidget.currentItem()
