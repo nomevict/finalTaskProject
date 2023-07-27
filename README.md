@@ -46,9 +46,6 @@ A classe Main é a classe principal do sistema e gerencia a lógica de controle 
 
 Essas funções são responsáveis por permitir a navegação entre as telas, interação com o servidor para realizar operações como cadastro, busca e edição de tarefas, além de exibir informações ao usuário por meio de caixas de diálogo.
 
-## Observações
-O projeto utiliza o módulo socket para a comunicação entre cliente e servidor. Certifique-se de que o servidor esteja em execução e acessível no endereço IP e porta especificados (10.180.44.80:9017). Caso o endereço ou a porta do servidor sejam diferentes, é necessário atualizar esses valores no código.
-
 ### Banco de Dados
 O sistema utiliza um banco de dados para armazenar as informações dos usuários e tarefas. É importante garantir que o banco de dados esteja configurado corretamente e acessível para o funcionamento adequado do sistema.
 
@@ -57,3 +54,7 @@ Algumas funções relacionadas ao cadastro e manipulação de tarefas podem cont
 O projeto utiliza uma estrutura básica de interface gráfica para a demonstração das funcionalidades. É possível estender e personalizar a interface para melhor atender aos requisitos do projeto final.
 
 Esse é um resumo das principais funcionalidades do sistema de gerenciamento de tarefas. Para a implementação completa e funcional do projeto, é necessário integrar o código fornecido com as classes de interface gráfica (Tela_login, Tela_inicial, etc.) e as classes responsáveis por realizar as operações no servidor. Além disso, podem ser implementadas outras funcionalidades adicionais conforme as necessidades do projeto.
+
+## Observações
+O projeto utiliza o módulo socket para a comunicação entre cliente e servidor. Certifique-se de que o servidor esteja em execução e acessível no endereço IP e porta especificados (10.180.44.80:9017). Caso o endereço ou a porta do servidor sejam diferentes, é necessário atualizar esses valores no código.
+
